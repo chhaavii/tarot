@@ -501,10 +501,10 @@ function renderArena(animate){
   const numVisible=Math.min(12,DECK.length);
   arena.innerHTML='';
 
-  // Layout: fan them out
+  // Layout: fan them out across full width
   const total=numVisible;
   const spreadAngle=Math.min(40, total*3.5);
-  const spreadX=Math.min(400, total*35);
+  const spreadX=Math.min(800, total*60); // Much wider spread
 
   for(let i=0;i<total;i++){
     const frac=(total===1)?0:(i/(total-1))-0.5; // -0.5 to 0.5
@@ -609,20 +609,20 @@ function pickCard(slot, el){
   S.pickedCards.push({...cardData, position:SPREADS[S.numCards][posNum]});
   S.pickedSlots.push(slot);
 
-  // Flip animation
+  // Flip animation and move to bottom
   el.classList.add('is-flipping');
-
-  // lift up first
   el.style.transition='transform .2s ease, box-shadow .2s, z-index 0s';
-  const currentTransform=el.style.transform;
   el.style.zIndex=50;
 
   setTimeout(()=>{
     el.classList.add('flipped','is-chosen');
     el.style.transition='transform .6s cubic-bezier(.4,0,.2,1), box-shadow .3s';
-    // keep position but add flip
-    const base=getFanTransform(slot, Math.min(12,DECK.length));
-    el.style.transform=`${base} rotateY(180deg)`;
+    
+    // Move card to bottom area
+    const bottomY = 180; // Move to bottom of arena
+    const bottomX = (S.pickedCards.length - 1) * 100; // Spread horizontally
+    el.style.transform=`translateX(${bottomX}px) translateY(${bottomY}px) rotateY(180deg)`;
+    
     setTimeout(()=>{
       el.classList.remove('is-flipping');
       // Show position label
@@ -642,7 +642,7 @@ function pickCard(slot, el){
 function getFanTransform(i, total){
   const frac=(total===1)?0:(i/(total-1))-0.5;
   const angle=frac*Math.min(40,total*3.5);
-  const x=frac*Math.min(220,total*18);
+  const x=frac*Math.min(800,total*60);
   const y=Math.abs(frac)*18;
   return `translateX(${x}px) translateY(${y}px) rotate(${angle}deg)`;
 }
@@ -660,7 +660,7 @@ function showPosLabel(slot, posNum){
   // position matching the card's fan position
   const total=Math.min(12,DECK.length);
   const frac=(total===1)?0:(slot/(total-1))-0.5;
-  const x=frac*Math.min(400,total*35);
+  const x=frac*Math.min(800,total*60);
   label.style.cssText=`position:absolute;bottom:-28px;left:50%;transform:translateX(calc(${x}px - 50%));width:95px;opacity:0;font-family:'Cinzel',serif;font-size:.62rem;color:var(--text-dim);letter-spacing:.1em;text-transform:uppercase;text-align:center;transition:opacity .4s`;
 
   arena.style.position='relative';
