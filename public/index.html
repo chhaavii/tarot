@@ -727,40 +727,8 @@ Write a rich, flowing tarot reading of 380–460 words:
 
 Write in second person. Evocative but accessible. Flowing paragraphs only — no numbered sections, no bullet points.`;
 
-  let readingText='';
-  try {
-    const res=await fetch(ANTHROPIC_API,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:1000,
-        messages:[{role:'user',content:prompt}]
-      })
-    });
-    const data=await res.json();
-    readingText=data.content?.map(b=>b.text||'').join('')||'The Oracle is silent. Please try again.';
-  } catch(e){
-    readingText='The veil between worlds grows thick. Please try again momentarily.';
-  }
-
-  renderReading(readingText);
-
-  // Save to backend
-  try {
-    const body={
-      seeker:{dob:S.dob,birthtime:S.birthtime,birthplace:S.birthplace,sunsign:S.sunsign},
-      question:S.question,
-      spread:S.numCards,
-      cards:S.pickedCards.map(c=>({
-        name:c.name,num:c.num,position:c.position,reversed:c.reversed,
-        upright:c.upright,reversedMeaning:c.rev,sym:c.sym,
-      })),
-      readingText,
-    };
-    // Skip API call and generate reading locally
+  // Generate reading locally instead of API call
   generateLocalReading();
-}
 
 function generateLocalReading() {
   // Generate personalized reading based on cards and question
@@ -862,27 +830,8 @@ function toggleHistory(){
 }
 
 async function loadHistory(){
-  try {
-    // Try API first
-    const r=await fetch(`${API_BASE}/api/readings`);
-    if(r.ok) {
-      const data=await r.json();
-      const body=document.getElementById('histBody');
-      if(!data.length){body.innerHTML='<div class="h-empty">No readings yet</div>';return;}
-      body.innerHTML=data.map(r=>`
-        <div class="h-item" onclick="showHistReading('${r.id}')">
-          <div class="h-item-date">${fmt(r.createdAt)}</div>
-          <div class="h-item-q">${esc(r.question)}</div>
-          <div class="h-item-meta">${r.seeker.sunsign||'Unknown sign'} · ${r.spread}-card spread</div>
-        </div>
-      `).join('');
-    } else {
-      // Fallback to local storage
-      loadLocalHistory();
-    }
-  } catch(e){ 
-    loadLocalHistory();
-  }
+  // Use local storage only
+  loadLocalHistory();
 }
 
 function loadLocalHistory() {
@@ -899,35 +848,43 @@ function loadLocalHistory() {
 }
 
 async function showHistReading(id){
-  try {
-    const r=await fetch(`${API_BASE}/api/readings/${id}`);
-    const d=await r.json();
-    toggleHistory();
-    // Show in a modal-ish phase (reuse phase3 layout)
-    document.getElementById('chosenRow').innerHTML=d.cards.map(c=>`
-      <div class="chosen-mini">
+  // Get reading from local storage
+  const readings = localStorage.readings ? JSON.parse(localStorage.readings) : [];
+  const reading = readings.find(r => r.id === id);
+  if (!reading) return;
+  
+  toggleHistory();
+  // Show in a modal-ish phase (reuse phase3 layout)
+  document.getElementById('chosenRow').innerHTML=reading.cards.map(c=>`
+    <div class="chosen-mini">
         <div class="csym">${c.sym||'✦'}</div>
         <div class="cname">${c.name}${c.reversed?' ⟳':''}</div>
         <div class="cpos">${c.position}</div>
       </div>
     `).join('');
-    renderReading(d.readingText||'Reading text not available.');
+    renderReading(reading.readingText||'Reading text not available.');
     setPhase('phase3');
-  } catch(e){ showToast('Could not load reading'); }
 }
 
 async function loadStats(){
-  try {
-    const r=await fetch(`${API_BASE}/api/stats`);
-    const d=await r.json();
-    if(!d.totalReadings) return;
-    const bar=document.getElementById('statsBar');
-    bar.style.display='flex';
-    bar.innerHTML=`
-      <div class="stat-pill">Readings: <span>${d.totalReadings}</span></div>
-      ${d.topCards[0]?`<div class="stat-pill">Most drawn: <span>${d.topCards[0].name}</span></div>`:''}
+  // Use local storage for stats
+  const readings = localStorage.readings ? JSON.parse(localStorage.readings) : [];
+  if(!readings.length) return;
+  const bar=document.getElementById('statsBar');
+  bar.style.display='flex';
+  // Calculate local stats
+  const cardCount = {};
+  readings.forEach(r => r.cards.forEach(c => {
+    cardCount[c.name] = (cardCount[c.name] || 0) + 1;
+  }));
+  const topCards = Object.entries(cardCount)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 1);
+    
+  bar.innerHTML=`
+      <div class="stat-pill">Readings: <span>${readings.length}</span></div>
+      ${topCards[0]?`<div class="stat-pill">Most drawn: <span>${topCards[0][0]}</span></div>`:''}
     `;
-  } catch(e){}
 }
 
 /* ── Utils ── */
