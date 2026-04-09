@@ -504,7 +504,7 @@ function renderArena(animate){
   // Layout: fan them out
   const total=numVisible;
   const spreadAngle=Math.min(40, total*3.5);
-  const spreadX=Math.min(220, total*18);
+  const spreadX=Math.min(400, total*35);
 
   for(let i=0;i<total;i++){
     const frac=(total===1)?0:(i/(total-1))-0.5; // -0.5 to 0.5
@@ -660,7 +660,7 @@ function showPosLabel(slot, posNum){
   // position matching the card's fan position
   const total=Math.min(12,DECK.length);
   const frac=(total===1)?0:(slot/(total-1))-0.5;
-  const x=frac*Math.min(220,total*18);
+  const x=frac*Math.min(400,total*35);
   label.style.cssText=`position:absolute;bottom:-28px;left:50%;transform:translateX(calc(${x}px - 50%));width:95px;opacity:0;font-family:'Cinzel',serif;font-size:.62rem;color:var(--text-dim);letter-spacing:.1em;text-transform:uppercase;text-align:center;transition:opacity .4s`;
 
   arena.style.position='relative';
