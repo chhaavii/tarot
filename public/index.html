@@ -765,11 +765,103 @@ Write in second person. Evocative but accessible. Flowing paragraphs only — no
     if(r.ok){
       const d=await r.json();
       S.currentSessionId=d.id;
-      showToast('✦ Reading saved to the archive');
+      showToast('✦ Reading saved to archive');
+      loadHistory();
+      loadStats();
+    } else {
+      // Fallback: Generate reading locally when API fails
+      console.log('API failed, generating local reading');
+      S.currentSessionId = 'local-' + Date.now();
+      showToast('✦ Reading created locally');
       loadHistory();
       loadStats();
     }
-  } catch(e){ /* backend offline — silently continue */ }
+  } catch(e){ 
+    // Fallback: Generate reading locally when API fails
+    console.log('API error, generating local reading');
+    generateLocalReading();
+  }
+}
+
+function generateLocalReading() {
+  // Generate personalized reading based on cards and question
+  const sign = S.sunsign ? S.sunsign.split(' ')[0] : 'Seeker';
+  const question = S.question.toLowerCase();
+  
+  let readingText = `As I gaze into the celestial energies surrounding you, ${sign}, I sense the universe has woven a meaningful tapestry in response to your inquiry about "${S.question}".\n\n`;
+  
+  S.pickedCards.forEach((card, index) => {
+    const position = SPREADS[S.numCards][index];
+    const cardName = card.name;
+    const isReversed = card.reversed ? 'reversed' : 'upright';
+    const meaning = card.reversed ? card.rev : card.upright;
+    
+    readingText += `**${cardName}** appears ${isReversed} in the ${position} position. `;
+    
+    // Add contextual interpretation based on question and card
+    if (question.includes('love') || question.includes('relationship')) {
+      if (cardName.includes('Lovers') || cardName.includes('Heart')) {
+        readingText += `This card speaks directly to matters of the heart, suggesting deep emotional connections and romantic possibilities are at play. `;
+      } else if (cardName.includes('Tower')) {
+        readingText += `A sudden revelation or transformation in your relationship dynamics may be necessary for growth. `;
+      } else {
+        readingText += `The energies here point to emotional clarity and authentic connection being essential. `;
+      }
+    } else if (question.includes('career') || question.includes('work')) {
+      if (cardName.includes('Chariot')) {
+        readingText += `Your determination and forward momentum will carry you through professional challenges. `;
+      } else if (cardName.includes('Pentacles')) {
+        readingText += `Material success and practical achievements are highlighted in your path. `;
+      } else {
+        readingText += `Your professional journey requires both skill and intuition to navigate successfully. `;
+      }
+    } else if (question.includes('path') || question.includes('direction')) {
+      readingText += `This card illuminates your journey ahead, offering guidance on the way forward. `;
+    } else {
+      readingText += `The wisdom here offers insight into your current situation and potential outcomes. `;
+    }
+    
+    readingText += `With ${meaning}, ${isReversed === 'reversed' ? 'you are being asked to reflect on internal blocks or resistance to this energy' : 'you are aligned with the natural flow of this powerful archetype'}.\n\n`;
+  });
+  
+  readingText += `The cards weave together to reveal that your path forward requires both trust in divine timing and courageous action. The universe supports your journey, ${sign}, but you must take the first step. The answers you seek are already within you - these cards merely help you see what your soul already knows.`;
+  
+  // Save reading locally
+  const localReading = {
+    id: S.currentSessionId || 'local-' + Date.now(),
+    createdAt: new Date().toISOString(),
+    seeker: {
+      dob: S.dob || null,
+      birthtime: S.birthtime || null,
+      birthplace: S.birthplace || null,
+      sunsign: S.sunsign || null,
+    },
+    question: S.question,
+    spread: S.numCards,
+    cards: S.pickedCards.map(c => ({
+      name: c.name,
+      num: c.num,
+      position: c.position,
+      reversed: c.reversed,
+      upright: c.upright,
+      reversedMeaning: c.rev,
+      sym: c.sym,
+    })),
+    readingText: readingText,
+  };
+  
+  // Add to local storage
+  if (!localStorage.readings) localStorage.readings = '[]';
+  const readings = JSON.parse(localStorage.readings);
+  readings.unshift(localReading);
+  localStorage.readings = JSON.stringify(readings.slice(0, 50)); // Keep last 50 readings
+  
+  S.currentSessionId = localReading.id;
+  showToast('✦ Reading created locally');
+  loadHistory();
+  loadStats();
+  renderReading(readingText);
+  setPhase('phase3');
 }
 
 function renderReading(text){
@@ -792,18 +884,39 @@ function toggleHistory(){
 
 async function loadHistory(){
   try {
+    // Try API first
     const r=await fetch(`${API_BASE}/api/readings`);
-    const data=await r.json();
-    const body=document.getElementById('histBody');
-    if(!data.length){body.innerHTML='<div class="h-empty">No readings yet</div>';return;}
-    body.innerHTML=data.map(r=>`
-      <div class="h-item" onclick="showHistReading('${r.id}')">
-        <div class="h-item-date">${fmt(r.createdAt)}</div>
-        <div class="h-item-q">${esc(r.question)}</div>
-        <div class="h-item-meta">${r.seeker.sunsign||'Unknown sign'} · ${r.spread}-card spread</div>
-      </div>
-    `).join('');
-  } catch(e){ document.getElementById('histBody').innerHTML='<div class="h-empty">Backend offline</div>'; }
+    if(r.ok) {
+      const data=await r.json();
+      const body=document.getElementById('histBody');
+      if(!data.length){body.innerHTML='<div class="h-empty">No readings yet</div>';return;}
+      body.innerHTML=data.map(r=>`
+        <div class="h-item" onclick="showHistReading('${r.id}')">
+          <div class="h-item-date">${fmt(r.createdAt)}</div>
+          <div class="h-item-q">${esc(r.question)}</div>
+          <div class="h-item-meta">${r.seeker.sunsign||'Unknown sign'} · ${r.spread}-card spread</div>
+        </div>
+      `).join('');
+    } else {
+      // Fallback to local storage
+      loadLocalHistory();
+    }
+  } catch(e){ 
+    loadLocalHistory();
+  }
+}
+
+function loadLocalHistory() {
+  const readings = localStorage.readings ? JSON.parse(localStorage.readings) : [];
+  const body=document.getElementById('histBody');
+  if(!readings.length){body.innerHTML='<div class="h-empty">No readings yet</div>';return;}
+  body.innerHTML=readings.map(r=>`
+    <div class="h-item" onclick="showHistReading('${r.id}')">
+      <div class="h-item-date">${fmt(r.createdAt)}</div>
+      <div class="h-item-q">${esc(r.question)}</div>
+      <div class="h-item-meta">${r.seeker.sunsign||'Unknown sign'} · ${r.spread}-card spread</div>
+    </div>
+  `).join('');
 }
 
 async function showHistReading(id){
