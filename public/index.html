@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Celestial Oracle</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;500;600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --gold:#c9a84c;--gold-light:#e8c97a;--gold-dim:#7a6028;
+  --deep:#0a0710;--card-bg:#110e1a;--surface:#16121f;--surface2:#1e1829;
+  --purple:#6b3fa0;--purple-light:#9b6fd4;
+  --text:#e8dfc8;--text-dim:#9a8f7a;
+  --border:rgba(201,168,76,0.25);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--deep);color:var(--text);font-family:'EB Garamond',serif;min-height:100vh;overflow-x:hidden}
+
+/* ── Stars ── */
+#stars{position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse at 20% 50%,rgba(107,63,160,.15) 0%,transparent 60%),
+             radial-gradient(ellipse at 80% 20%,rgba(201,168,76,.08) 0%,transparent 50%),
+             radial-gradient(ellipse at 60% 80%,rgba(107,63,160,.10) 0%,transparent 40%)}
+.star{position:absolute;background:#fff;border-radius:50%;
+  animation:twinkle var(--dur,3s) ease-in-out infinite var(--delay,0s)}
+@keyframes twinkle{0%,100%{opacity:var(--min,.2);transform:scale(1)}50%{opacity:var(--max,1);transform:scale(1.3)}}
+
+/* ── Layout ── */
+.container{position:relative;z-index:1;max-width:880px;margin:0 auto;padding:2rem 1.5rem 5rem}
+
+/* ── Header ── */
+.header{text-align:center;padding:3rem 0 2rem;animation:fadeDown 1s ease both}
+.header-symbol{font-size:2.8rem;display:block;margin-bottom:.5rem;
+  filter:drop-shadow(0 0 12px rgba(201,168,76,.6));animation:float 4s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+h1{font-family:'Cinzel Decorative',serif;font-size:clamp(1.4rem,4vw,2.2rem);
+  color:var(--gold);letter-spacing:.05em;text-shadow:0 0 30px rgba(201,168,76,.4);line-height:1.3}
+.subtitle{font-family:'Cinzel',serif;font-size:.85rem;color:var(--text-dim);
+  letter-spacing:.3em;text-transform:uppercase;margin-top:.5rem}
+.divider{display:flex;align-items:center;gap:1rem;margin:1.5rem auto;max-width:300px}
+.divider::before,.divider::after{content:'';flex:1;height:1px;
+  background:linear-gradient(90deg,transparent,var(--gold-dim),transparent)}
+.divider-star{color:var(--gold);font-size:1rem}
+
+/* ── Oracle bubble ── */
+.oracle-msg{background:var(--surface);border:1px solid var(--border);
+  border-radius:16px 16px 16px 4px;padding:1.25rem 1.5rem;font-size:1.05rem;
+  line-height:1.8;margin-bottom:1.5rem;position:relative;
+  animation:fadeIn .6s ease both;
+  box-shadow:0 0 30px rgba(107,63,160,.15),inset 0 0 20px rgba(201,168,76,.03)}
+.oracle-msg::before{content:'✦';position:absolute;top:-10px;left:16px;
+  background:var(--surface);padding:0 6px;color:var(--gold);font-size:.7rem}
+.oracle-label{font-family:'Cinzel',serif;font-size:.72rem;letter-spacing:.2em;
+  color:var(--gold-dim);text-transform:uppercase;margin-bottom:1rem;
+  display:flex;align-items:center;gap:.5rem}
+.oracle-label::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* ── Inputs ── */
+label{display:block;font-family:'Cinzel',serif;font-size:.78rem;
+  letter-spacing:.15em;color:var(--gold);text-transform:uppercase;margin-bottom:.5rem}
+input,textarea,select{width:100%;background:var(--surface);border:1px solid var(--border);
+  border-radius:8px;color:var(--text);font-family:'EB Garamond',serif;font-size:1rem;
+  padding:.75rem 1rem;transition:border-color .3s,box-shadow .3s;outline:none;margin-bottom:1.2rem}
+input:focus,textarea:focus{border-color:rgba(201,168,76,.6);box-shadow:0 0 15px rgba(201,168,76,.1)}
+textarea{min-height:90px;resize:vertical;line-height:1.6}
+input::placeholder,textarea::placeholder{color:var(--text-dim);opacity:.7}
+select option{background:#1e1829;color:var(--text)}
+
+/* ── Buttons ── */
+.btn{font-family:'Cinzel',serif;font-size:.85rem;letter-spacing:.15em;text-transform:uppercase;
+  padding:.85rem 2rem;border:1px solid var(--gold-dim);border-radius:8px;
+  background:linear-gradient(135deg,rgba(201,168,76,.12),rgba(107,63,160,.12));
+  color:var(--gold-light);cursor:pointer;transition:all .3s;
+  display:inline-flex;align-items:center;gap:.5rem;position:relative;overflow:hidden}
+.btn::before{content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(201,168,76,.2),rgba(107,63,160,.2));
+  opacity:0;transition:opacity .3s}
+.btn:hover{border-color:var(--gold);transform:translateY(-1px)}
+.btn:hover::before{opacity:1}
+.btn:active{transform:translateY(0)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btn-full{width:100%;justify-content:center}
+.btn-sm{font-size:.7rem;padding:.5rem 1rem}
+
+/* ── Spread selector ── */
+.spread-type-select{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.2rem}
+.spread-btn{font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.1em;
+  padding:.45rem .8rem;border:1px solid var(--border);border-radius:6px;
+  background:transparent;color:var(--text-dim);cursor:pointer;transition:all .2s}
+.spread-btn.active,.spread-btn:hover{border-color:var(--gold-dim);color:var(--gold);
+  background:rgba(201,168,76,.07)}
+
+/* ── Shuffle arena ── */
+#shuffleArena{
+  position:relative;height:220px;margin:2rem 0;
+  display:flex;align-items:center;justify-content:center;
+}
+.arena-card{
+  position:absolute;width:95px;height:160px;border-radius:10px;
+  border:1.5px solid var(--border);
+  transform-origin:center center;
+  cursor:pointer;
+  transition:box-shadow .3s;
+  /* 3D flip setup */
+  transform-style:preserve-3d;
+  transition:transform .6s cubic-bezier(.4,0,.2,1),box-shadow .3s,border-color .3s;
+}
+.arena-card.is-flipping{pointer-events:none}
+.arena-card:not(.is-chosen):not(.is-flipping):hover{
+  box-shadow:0 0 25px rgba(201,168,76,.35),0 -14px 30px rgba(0,0,0,.4);
+  border-color:rgba(201,168,76,.7);
+  z-index:20!important;
+}
+.arena-card .c-face{
+  position:absolute;inset:0;border-radius:9px;
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+}
+/* back face */
+.arena-card .c-back{
+  background:var(--card-bg);
+  background-image:
+    repeating-linear-gradient(45deg,transparent,transparent 8px,rgba(201,168,76,.05) 8px,rgba(201,168,76,.05) 9px),
+    repeating-linear-gradient(-45deg,transparent,transparent 8px,rgba(107,63,160,.05) 8px,rgba(107,63,160,.05) 9px);
+}
+.arena-card .c-back-inner{
+  position:absolute;inset:6px;border:1px solid rgba(201,168,76,.15);border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.8rem;color:rgba(201,168,76,.35)
+}
+/* front face */
+.arena-card .c-front{
+  background:linear-gradient(155deg,var(--surface2) 0%,var(--card-bg) 100%);
+  transform:rotateY(180deg);
+  padding:.5rem;text-align:center;
+}
+.arena-card .c-front .cn{font-family:'Cinzel',serif;font-size:.55rem;color:var(--gold-dim);letter-spacing:.15em;margin-bottom:3px}
+.arena-card .c-front .cs{font-size:2rem;line-height:1;margin-bottom:3px}
+.arena-card .c-front .ct{font-family:'Cinzel',serif;font-size:.55rem;color:var(--gold);line-height:1.3}
+/* flipped = show front */
+.arena-card.flipped{transform:rotateY(180deg)!important}
+
+/* chosen highlight */
+.arena-card.is-chosen{
+  border-color:var(--gold)!important;
+  box-shadow:0 0 28px rgba(201,168,76,.45)!important;
+  cursor:default;
+}
+
+/* position labels */
+.pos-labels{
+  display:flex;justify-content:center;gap:0;
+  margin-top:.5rem;
+  flex-wrap:wrap;
+}
+.pos-label{
+  font-family:'Cinzel',serif;font-size:.62rem;color:var(--text-dim);
+  letter-spacing:.12em;text-transform:uppercase;text-align:center;
+  width:95px;margin:0 .5rem;opacity:0;transition:opacity .4s;
+}
+.pos-label.visible{opacity:1}
+
+/* shuffle button row */
+.shuffle-row{display:flex;gap:1rem;align-items:center;justify-content:center;margin-bottom:.5rem;flex-wrap:wrap}
+.pick-counter{font-family:'Cinzel',serif;font-size:.75rem;color:var(--gold);
+  letter-spacing:.15em;text-align:center;margin-top:.75rem}
+.instruction{text-align:center;font-size:1rem;color:var(--text-dim);
+  font-style:italic;margin-bottom:.75rem}
+
+/* ── Chosen summary row ── */
+.chosen-row{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin:1.5rem 0}
+.chosen-mini{background:var(--surface);border:1px solid var(--border);border-radius:8px;
+  padding:.6rem .8rem;text-align:center;min-width:90px;animation:fadeIn .5s ease both}
+.chosen-mini .csym{font-size:1.8rem;line-height:1}
+.chosen-mini .cname{font-family:'Cinzel',serif;font-size:.6rem;color:var(--gold);line-height:1.3;margin-top:2px}
+.chosen-mini .cpos{font-size:.58rem;color:var(--text-dim);margin-top:2px}
+
+/* ── Reading result ── */
+.reading-result{background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;padding:2rem;margin-top:2rem;
+  box-shadow:0 0 40px rgba(107,63,160,.2);animation:fadeIn .8s ease both;
+  position:relative;overflow:hidden}
+.reading-result::before{content:'';position:absolute;top:0;left:0;right:0;
+  height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.reading-content{font-size:1.05rem;line-height:1.9;color:var(--text)}
+.reading-content p{margin-bottom:1rem}
+.reading-content strong{color:var(--gold-light);font-weight:500}
+.reading-content em{color:var(--purple-light)}
+
+/* ── History panel ── */
+.history-toggle{
+  position:fixed;top:1.5rem;right:1.5rem;z-index:100;
+  font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.1em;
+  padding:.45rem .9rem;border:1px solid var(--border);border-radius:20px;
+  background:var(--surface);color:var(--text-dim);cursor:pointer;transition:all .3s;
+}
+.history-toggle:hover{border-color:var(--gold);color:var(--gold)}
+.history-panel{
+  position:fixed;top:0;right:0;bottom:0;width:340px;
+  background:var(--surface2);border-left:1px solid var(--border);
+  z-index:200;transform:translateX(100%);transition:transform .4s cubic-bezier(.4,0,.2,1);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.history-panel.open{transform:translateX(0)}
+.history-head{padding:1.5rem;border-bottom:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:center}
+.history-head h2{font-family:'Cinzel',serif;font-size:1rem;color:var(--gold)}
+.h-close{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:1.2rem;
+  transition:color .2s}
+.h-close:hover{color:var(--gold)}
+.history-body{flex:1;overflow-y:auto;padding:1rem}
+.history-body::-webkit-scrollbar{width:4px}
+.history-body::-webkit-scrollbar-track{background:transparent}
+.history-body::-webkit-scrollbar-thumb{background:var(--gold-dim);border-radius:2px}
+.h-item{background:var(--surface);border:1px solid var(--border);border-radius:8px;
+  padding:.9rem 1rem;margin-bottom:.75rem;cursor:pointer;transition:border-color .2s}
+.h-item:hover{border-color:var(--gold-dim)}
+.h-item-date{font-family:'Cinzel',serif;font-size:.62rem;color:var(--text-dim);
+  letter-spacing:.1em;margin-bottom:.3rem}
+.h-item-q{font-size:.9rem;color:var(--text);line-height:1.4}
+.h-item-meta{font-family:'Cinzel',serif;font-size:.6rem;color:var(--gold-dim);margin-top:.4rem}
+.h-empty{text-align:center;color:var(--text-dim);font-style:italic;padding:2rem 0}
+
+/* ── Stats bar ── */
+.stats-bar{display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1.5rem}
+.stat-pill{background:rgba(201,168,76,.08);border:1px solid var(--border);
+  border-radius:20px;padding:.3rem .9rem;font-family:'Cinzel',serif;font-size:.65rem;
+  color:var(--text-dim);letter-spacing:.08em}
+.stat-pill span{color:var(--gold);font-size:.8rem}
+
+/* ── Toast ── */
+.toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(80px);
+  background:var(--surface2);border:1px solid var(--gold-dim);border-radius:8px;
+  padding:.75rem 1.5rem;font-family:'Cinzel',serif;font-size:.78rem;color:var(--gold);
+  z-index:300;transition:transform .3s ease;letter-spacing:.1em}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* ── Phases ── */
+.phase{display:none}.phase.active{display:block}
+
+/* ── Anims ── */
+@keyframes fadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes cardFlyIn{
+  from{opacity:0;transform:translateY(-60px) rotate(var(--rot,0deg))}
+  to{opacity:1}
+}
+@keyframes shufflePulse{
+  0%{box-shadow:0 0 0 rgba(201,168,76,0)}
+  50%{box-shadow:0 0 20px rgba(201,168,76,.4)}
+  100%{box-shadow:0 0 0 rgba(201,168,76,0)}
+}
+
+/* loading dots */
+.loading{display:flex;align-items:center;gap:6px;padding:1rem 0;color:var(--text-dim);font-style:italic}
+.dot{width:5px;height:5px;background:var(--gold);border-radius:50%;
+  animation:bounce 1.2s ease infinite}
+.dot:nth-child(2){animation-delay:.15s}.dot:nth-child(3){animation-delay:.3s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-6px);opacity:1}}
+
+/* error */
+.err{color:#e06b6b;font-size:.88rem;margin:-0.8rem 0 .8rem}
+
+/* reset */
+.reset-btn{display:block;margin:2rem auto 0;font-family:'Cinzel',serif;
+  font-size:.75rem;letter-spacing:.1em;color:var(--text-dim);
+  background:none;border:1px solid rgba(255,255,255,.1);border-radius:6px;
+  padding:.5rem 1.2rem;cursor:pointer;transition:all .3s}
+.reset-btn:hover{color:var(--gold);border-color:var(--border)}
+
+@media(max-width:600px){
+  .history-panel{width:100%}
+  .arena-card{width:78px;height:132px}
+  .pos-label{width:78px}
+}
+</style>
+</head>
+<body>
+
+<div id="stars"></div>
+
+<!-- History toggle -->
+<button class="history-toggle" onclick="toggleHistory()">☽ Past Readings</button>
+
+<!-- History panel -->
+<div class="history-panel" id="histPanel">
+  <div class="history-head">
+    <h2>Past Readings</h2>
+    <button class="h-close" onclick="toggleHistory()">✕</button>
+  </div>
+  <div class="history-body" id="histBody">
+    <div class="h-empty">No readings yet</div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="header">
+    <span class="header-symbol">☽ ✦ ☾</span>
+    <h1>The Celestial Oracle</h1>
+    <p class="subtitle">Ancient Wisdom · Tarot Divination</p>
+    <div class="divider"><span class="divider-star">✦</span></div>
+  </div>
+
+  <!-- Stats bar (loaded async) -->
+  <div class="stats-bar" id="statsBar" style="display:none"></div>
+
+  <!-- ── PHASE 1: Info form ── -->
+  <div id="phase1" class="phase active">
+    <div class="oracle-msg">
+      <div class="oracle-label">The Oracle speaks</div>
+      Seeker, you have found your way to the threshold of the unseen. The cards do not predict fate — they illuminate the currents that flow through your life, that you may navigate them with greater wisdom.<br><br>
+      Share with me the details of your birth, that the stars may align with your reading. Then tell me what weighs upon your soul.
+    </div>
+
+    <label>Your Date of Birth</label>
+    <input type="date" id="dob" max="2015-01-01">
+
+    <label>Birth Time <span style="color:var(--text-dim);font-size:.8em;text-transform:none;letter-spacing:0">(approximate is fine)</span></label>
+    <input type="time" id="birthtime">
+
+    <label>Birth Place</label>
+    <input type="text" id="birthplace" placeholder="e.g. Bucharest, Romania">
+
+    <label>Sun Sign (if known)</label>
+    <select id="sunsign">
+      <option value="">— Select your sign —</option>
+      <option>Aries ♈</option><option>Taurus ♉</option><option>Gemini ♊</option>
+      <option>Cancer ♋</option><option>Leo ♌</option><option>Virgo ♍</option>
+      <option>Libra ♎</option><option>Scorpio ♏</option><option>Sagittarius ♐</option>
+      <option>Capricorn ♑</option><option>Aquarius ♒</option><option>Pisces ♓</option>
+    </select>
+
+    <label>Your Question for the Cards</label>
+    <textarea id="question" placeholder="What do you seek guidance on? Be as specific or as open as you wish…"></textarea>
+    <div class="err" id="err1"></div>
+
+    <label>Choose Your Spread</label>
+    <div class="spread-type-select">
+      <button class="spread-btn active" onclick="selectSpread(this,3)">Three Card (Past · Present · Future)</button>
+      <button class="spread-btn" onclick="selectSpread(this,5)">Celtic Cross · 5 cards</button>
+      <button class="spread-btn" onclick="selectSpread(this,7)">Seven Card Path</button>
+    </div>
+
+    <button class="btn btn-full" onclick="goPhase2()">✦ &nbsp; Consult the Cards</button>
+  </div>
+
+  <!-- ── PHASE 2: Shuffle & Pick ── -->
+  <div id="phase2" class="phase">
+    <div class="oracle-msg" id="oracle2"></div>
+
+    <div class="shuffle-row">
+      <button class="btn btn-sm" id="shuffleBtn" onclick="animateShuffle()">⟳ &nbsp; Shuffle the Deck</button>
+      <p class="instruction" id="instruct" style="margin:0;flex:1;text-align:left"></p>
+    </div>
+
+    <div id="shuffleArena"></div>
+
+    <!-- position labels row (rendered dynamically to line up) -->
+    <div class="pos-labels" id="posLabels"></div>
+
+    <p class="pick-counter" id="pickCounter"></p>
+
+    <button class="btn btn-full" id="revealBtn" onclick="goPhase3()" disabled style="margin-top:1rem">
+      ☽ &nbsp; Reveal My Reading
+    </button>
+  </div>
+
+  <!-- ── PHASE 3: Reading ── -->
+  <div id="phase3" class="phase">
+    <div class="oracle-msg">
+      <div class="oracle-label">The Oracle's Vision</div>
+      The cards have spoken. Sit with these words and let them settle into your understanding.
+    </div>
+
+    <div class="chosen-row" id="chosenRow"></div>
+
+    <div class="reading-result">
+      <div class="oracle-label">Your Reading</div>
+      <div class="reading-content" id="readingContent">
+        <div class="loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div>&nbsp; The Oracle is reading your cards…</div>
+      </div>
+    </div>
+
+    <button class="reset-btn" onclick="resetAll()">✧ Begin a New Reading</button>
+  </div>
+
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ── Configuration ── */
+const API_BASE = 'http://localhost:3847';
+const ANTHROPIC_API = 'https://api.anthropic.com/v1/messages';
+
+/* ── Star field ── */
+(()=>{
+  const c=document.getElementById('stars');
+  for(let i=0;i<140;i++){
+    const s=document.createElement('div');s.className='star';
+    const sz=Math.random()*2+.5;
+    s.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;--dur:${2+Math.random()*4}s;--delay:${Math.random()*6}s;--min:${.1+Math.random()*.3};--max:${.5+Math.random()*.5}`;
+    c.appendChild(s);
+  }
+})();
+
+/* ── Deck data ── */
+const DECK=[
+  {name:'The Fool',sym:'🃏',num:'0',upright:'New beginnings, innocence, spontaneity',rev:'Recklessness, risk-taking, naivety'},
+  {name:'The Magician',sym:'🔮',num:'I',upright:'Manifestation, power, resourcefulness',rev:'Manipulation, poor planning, untapped talent'},
+  {name:'The High Priestess',sym:'🌙',num:'II',upright:'Intuition, mystery, inner knowledge',rev:'Secrets, disconnected intuition, withdrawal'},
+  {name:'The Empress',sym:'🌿',num:'III',upright:'Femininity, abundance, nature, nurture',rev:'Creative block, dependence, smothering'},
+  {name:'The Emperor',sym:'⚡',num:'IV',upright:'Authority, structure, stability, leadership',rev:'Domination, excessive control, inflexibility'},
+  {name:'The Hierophant',sym:'🕍',num:'V',upright:'Tradition, conformity, spiritual wisdom',rev:'Rebellion, unconventionality, challenging dogma'},
+  {name:'The Lovers',sym:'💞',num:'VI',upright:'Relationships, choices, harmony, alignment',rev:'Imbalance, misalignment, bad choices'},
+  {name:'The Chariot',sym:'⚔️',num:'VII',upright:'Control, willpower, victory, determination',rev:'Lack of direction, aggression, no control'},
+  {name:'Strength',sym:'🦁',num:'VIII',upright:'Courage, patience, inner strength, compassion',rev:'Self-doubt, weakness, raw emotion'},
+  {name:'The Hermit',sym:'🕯️',num:'IX',upright:'Soul-searching, introspection, solitary guidance',rev:'Isolation, loneliness, lost path'},
+  {name:'Wheel of Fortune',sym:'☸️',num:'X',upright:'Luck, karma, life cycles, destiny',rev:'Bad luck, resistance to change, stagnation'},
+  {name:'Justice',sym:'⚖️',num:'XI',upright:'Justice, fairness, truth, cause and effect',rev:'Unfairness, dishonesty, lack of accountability'},
+  {name:'The Hanged Man',sym:'🌀',num:'XII',upright:'Suspension, surrender, new perspectives, pause',rev:'Delays, indecision, resistance to change'},
+  {name:'Death',sym:'🌑',num:'XIII',upright:'Transformation, endings, transition, new dawn',rev:'Fear of change, stagnation, unable to move on'},
+  {name:'Temperance',sym:'🌊',num:'XIV',upright:'Balance, moderation, patience, purpose',rev:'Imbalance, excess, lack of long-term vision'},
+  {name:'The Devil',sym:'🔗',num:'XV',upright:'Bondage, addiction, materialism, shadow self',rev:'Freedom, release, restoring control'},
+  {name:'The Tower',sym:'🌩️',num:'XVI',upright:'Upheaval, chaos, sudden revelation, awakening',rev:'Avoiding disaster, fear of change, bracing for impact'},
+  {name:'The Star',sym:'⭐',num:'XVII',upright:'Hope, faith, rejuvenation, serenity',rev:'Despair, hopelessness, lack of faith'},
+  {name:'The Moon',sym:'🌕',num:'XVIII',upright:'Illusion, fear, the unconscious, dreams',rev:'Release of fear, repressed emotion, confusion clearing'},
+  {name:'The Sun',sym:'☀️',num:'XIX',upright:'Success, radiance, abundance, joy',rev:'Temporary depression, lack of success, inner child blocked'},
+  {name:'Judgement',sym:'📯',num:'XX',upright:'Reflection, reckoning, awakening, absolution',rev:'Self-doubt, inner critic, ignoring the call'},
+  {name:'The World',sym:'🌍',num:'XXI',upright:'Completion, integration, accomplishment, wholeness',rev:'Seeking closure, incompletion, avoiding the finish'},
+  {name:'Ace of Cups',sym:'🏆',num:'Cups · A',upright:'New feelings, intuition, beginnings of love',rev:'Emotional loss, blocked creativity, emptiness'},
+  {name:'Three of Cups',sym:'🥂',num:'Cups · 3',upright:'Celebration, friendship, creativity, community',rev:'Overindulgence, gossip, isolation'},
+  {name:'Five of Swords',sym:'🗡️',num:'Swords · 5',upright:'Conflict, defeat, win at all costs',rev:'Reconciliation, past resentment, forgiveness'},
+  {name:'Eight of Swords',sym:'🌫️',num:'Swords · 8',upright:'Imprisonment, entrapment, self-victimization',rev:'Self-limiting beliefs, freedom approaching'},
+  {name:'Three of Pentacles',sym:'💎',num:'Pent · 3',upright:'Teamwork, learning, implementation, collaboration',rev:'Disharmony, misalignment, working alone poorly'},
+  {name:'Ten of Pentacles',sym:'🌳',num:'Pent · 10',upright:'Legacy, culmination, inheritance, family',rev:'Loss of stability, fleeting success, conflict over wealth'},
+  {name:'Queen of Wands',sym:'🔥',num:'Wands · Q',upright:'Courage, determination, independence, vibrancy',rev:'Self-doubt, demanding, shrinking violet'},
+  {name:'Knight of Cups',sym:'🌊',num:'Cups · Kn',upright:'Following the heart, creative pursuit, romance',rev:'Overactive imagination, unrealistic, moody'},
+  {name:'Two of Wands',sym:'🧭',num:'Wands · 2',upright:'Future planning, progress, decisions, discovery',rev:'Fear of unknown, lack of planning, playing it safe'},
+  {name:'Six of Pentacles',sym:'🌿',num:'Pent · 6',upright:'Generosity, charity, giving and receiving',rev:'Debts, self-care neglected, unfairness'},
+];
+
+const SPREADS={
+  3:['Past','Present','Future'],
+  5:['Present Situation','Crossing Force','Root Cause','Near Future','Likely Outcome'],
+  7:['You Now','What Helps','What Hinders','What to Release','What to Embrace','Counsel','Outcome']
+};
+
+/* ── State ── */
+let S={
+  numCards:3, dob:'', birthtime:'', birthplace:'', sunsign:'', question:'',
+  shuffled:[], pickedCards:[], pickedSlots:[], isShuffling:false,
+  currentSessionId: null,
+};
+
+/* ── Spread selector ── */
+function selectSpread(btn, n){
+  document.querySelectorAll('.spread-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); S.numCards=n;
+}
+
+/* ── Phase 1 → 2 ── */
+function goPhase2(){
+  const dob=document.getElementById('dob').value;
+  const q=document.getElementById('question').value.trim();
+  if(!dob){document.getElementById('err1').textContent='Please enter your date of birth.';return;}
+  if(!q){document.getElementById('err1').textContent='Please share your question with the Oracle.';return;}
+  document.getElementById('err1').textContent='';
+
+  S.dob=dob; S.birthtime=document.getElementById('birthtime').value;
+  S.birthplace=document.getElementById('birthplace').value;
+  S.sunsign=document.getElementById('sunsign').value;
+  S.question=q; S.pickedCards=[]; S.pickedSlots=[];
+
+  const positions=SPREADS[S.numCards];
+  const sign=S.sunsign?S.sunsign.split(' ')[0]:'Seeker';
+
+  document.getElementById('oracle2').innerHTML=`
+    <div class="oracle-label">The Oracle speaks</div>
+    I sense your energy, ${sign}. Your question resonates: <em>"${esc(q)}"</em><br><br>
+    First, <strong>shuffle the deck</strong> to infuse it with your intent. Then choose <strong>${S.numCards} cards</strong> — one for each position: <em>${positions.join(' · ')}</em>. Trust what calls to you.
+  `;
+
+  // Build initial stacked deck
+  S.shuffled=shuffle([...DECK]);
+  renderArena(false);
+  updateCounter();
+  document.getElementById('instruct').textContent='Click "Shuffle the Deck" to begin.';
+  document.getElementById('revealBtn').disabled=true;
+
+  setPhase('phase2');
+}
+
+/* ── Render cards in arena ── */
+function renderArena(animate){
+  const arena=document.getElementById('shuffleArena');
+  const numVisible=Math.min(12,DECK.length);
+  arena.innerHTML='';
+
+  // Layout: fan them out
+  const total=numVisible;
+  const spreadAngle=Math.min(40, total*3.5);
+  const spreadX=Math.min(220, total*18);
+
+  for(let i=0;i<total;i++){
+    const frac=(total===1)?0:(i/(total-1))-0.5; // -0.5 to 0.5
+    const angle=frac*spreadAngle;
+    const x=frac*spreadX;
+    const y=Math.abs(frac)*18; // arc
+    const zIndex=i;
+
+    const card=document.createElement('div');
+    card.className='arena-card';
+    card.dataset.slot=i;
+    card.style.cssText=`
+      transform:translateX(${x}px) translateY(${y}px) rotate(${angle}deg);
+      z-index:${zIndex};
+      --rot:${angle}deg;
+    `;
+    if(animate){
+      card.style.animation=`cardFlyIn .5s ease both ${i*30}ms`;
+    }
+
+    card.innerHTML=`
+      <div class="c-face c-back"><div class="c-back-inner">✦</div></div>
+      <div class="c-face c-front">
+        <div class="cn">${S.shuffled[i].num}</div>
+        <div class="cs">${S.shuffled[i].sym}</div>
+        <div class="ct">${S.shuffled[i].name}${S.shuffled[i].reversed?' ⟳':''}</div>
+      </div>
+    `;
+    card.onclick=()=>pickCard(i,card);
+    arena.appendChild(card);
+  }
+
+  // Rebuild pos labels
+  const posLabels=document.getElementById('posLabels');
+  posLabels.innerHTML='';
+}
+
+/* ── Shuffle animation ── */
+async function animateShuffle(){
+  if(S.isShuffling||S.pickedCards.length>0) return;
+  S.isShuffling=true;
+  document.getElementById('shuffleBtn').disabled=true;
+  document.getElementById('instruct').textContent='Channeling your energy into the deck…';
+
+  const arena=document.getElementById('shuffleArena');
+  const cards=[...arena.querySelectorAll('.arena-card:not(.is-chosen)')];
+
+  // Phase 1: collapse to center
+  cards.forEach(c=>{
+    c.style.transition='transform .35s cubic-bezier(.4,0,.2,1)';
+    c.style.transform='translateX(0) translateY(0) rotate(0deg)';
+  });
+  await delay(380);
+
+  // Phase 2: burst out randomly 3 times
+  for(let pass=0;pass<3;pass++){
+    cards.forEach(c=>{
+      const rx=(Math.random()-.5)*260;
+      const ry=(Math.random()-.5)*80-30;
+      const rr=(Math.random()-.5)*60;
+      c.style.transition=`transform .25s ease ${Math.random()*80}ms, opacity .2s`;
+      c.style.transform=`translateX(${rx}px) translateY(${ry}px) rotate(${rr}deg)`;
+      c.style.opacity='.7';
+    });
+    await delay(320);
+    cards.forEach(c=>{c.style.transform='translateX(0) translateY(0) rotate(0deg)';c.style.opacity='1';});
+    await delay(260);
+  }
+
+  // Reshuffle data
+  S.shuffled=shuffle([...DECK]);
+
+  // Update card fronts with new data
+  cards.forEach((c,i)=>{
+    if(!c.classList.contains('is-chosen')){
+      const d=S.shuffled[i];
+      c.querySelector('.cn').textContent=d.num;
+      c.querySelector('.cs').textContent=d.sym;
+      c.querySelector('.ct').textContent=d.name+(d.reversed?' ⟳':'');
+    }
+  });
+
+  await delay(100);
+  // Re-fan
+  renderArena(true);
+  await delay(600);
+
+  S.isShuffling=false;
+  document.getElementById('shuffleBtn').disabled=false;
+  document.getElementById('instruct').textContent='Now choose the cards that call to you.';
+  showToast('✦ The deck has been shuffled');
+}
+
+/* ── Pick a card ── */
+function pickCard(slot, el){
+  if(el.classList.contains('is-chosen')||el.classList.contains('is-flipping')) return;
+  if(S.pickedCards.length>=S.numCards) return;
+  if(S.isShuffling) return;
+
+  const posNum=S.pickedCards.length;
+  const cardData=S.shuffled[slot];
+  S.pickedCards.push({...cardData, position:SPREADS[S.numCards][posNum]});
+  S.pickedSlots.push(slot);
+
+  // Flip animation
+  el.classList.add('is-flipping');
+
+  // lift up first
+  el.style.transition='transform .2s ease, box-shadow .2s, z-index 0s';
+  const currentTransform=el.style.transform;
+  el.style.zIndex=50;
+
+  setTimeout(()=>{
+    el.classList.add('flipped','is-chosen');
+    el.style.transition='transform .6s cubic-bezier(.4,0,.2,1), box-shadow .3s';
+    // keep position but add flip
+    const base=getFanTransform(slot, Math.min(12,DECK.length));
+    el.style.transform=`${base} rotateY(180deg)`;
+    setTimeout(()=>{
+      el.classList.remove('is-flipping');
+      // Show position label
+      showPosLabel(slot, posNum);
+    },650);
+  },80);
+
+  updateCounter();
+
+  if(S.pickedCards.length===S.numCards){
+    document.getElementById('revealBtn').disabled=false;
+    document.getElementById('instruct').textContent='All cards chosen. When ready, receive your reading.';
+    document.getElementById('shuffleBtn').disabled=true;
+  }
+}
+
+function getFanTransform(i, total){
+  const frac=(total===1)?0:(i/(total-1))-0.5;
+  const angle=frac*Math.min(40,total*3.5);
+  const x=frac*Math.min(220,total*18);
+  const y=Math.abs(frac)*18;
+  return `translateX(${x}px) translateY(${y}px) rotate(${angle}deg)`;
+}
+
+function showPosLabel(slot, posNum){
+  const labels=document.getElementById('posLabels');
+  // Create positioned label aligned under card
+  const arena=document.getElementById('shuffleArena');
+  const card=arena.querySelector(`[data-slot="${slot}"]`);
+  if(!card) return;
+
+  const label=document.createElement('div');
+  label.className='pos-label';
+  label.textContent=SPREADS[S.numCards][posNum];
+  // position matching the card's fan position
+  const total=Math.min(12,DECK.length);
+  const frac=(total===1)?0:(slot/(total-1))-0.5;
+  const x=frac*Math.min(220,total*18);
+  label.style.cssText=`position:absolute;bottom:-28px;left:50%;transform:translateX(calc(${x}px - 50%));width:95px;opacity:0;font-family:'Cinzel',serif;font-size:.62rem;color:var(--text-dim);letter-spacing:.1em;text-transform:uppercase;text-align:center;transition:opacity .4s`;
+
+  arena.style.position='relative';
+  arena.appendChild(label);
+  setTimeout(()=>label.style.opacity='1',50);
+}
+
+function updateCounter(){
+  document.getElementById('pickCounter').textContent=
+    `${S.pickedCards.length} of ${S.numCards} cards chosen`;
+}
+
+/* ── Phase 3: reading ── */
+async function goPhase3(){
+  setPhase('phase3');
+
+  // Show chosen mini cards
+  const positions=SPREADS[S.numCards];
+  document.getElementById('chosenRow').innerHTML=S.pickedCards.map((c,i)=>`
+    <div class="chosen-mini">
+      <div class="csym">${c.sym}</div>
+      <div class="cname">${c.name}${c.reversed?' ⟳':''}</div>
+      <div class="cpos">${positions[i]}</div>
+    </div>
+  `).join('');
+
+  // Build Claude prompt
+  const cardDesc=S.pickedCards.map(c=>`
+Position: ${c.position}
+Card: ${c.name} (${c.reversed?'Reversed':'Upright'})
+Keywords: ${c.reversed?c.rev:c.upright}
+  `).join('\n');
+
+  const age=Math.floor((Date.now()-new Date(S.dob))/(365.25*24*3600*1000));
+
+  const prompt=`You are "The Oracle," an experienced and mystical tarot reader. You speak with warmth, depth, and poetic language — like a wise elder reading by candlelight. Speak directly, personally, and powerfully. Do NOT use generic disclaimers.
+
+The seeker's details:
+- Date of birth: ${S.dob} (age ~${age})
+- Birth time: ${S.birthtime||'Unknown'}
+- Birth place: ${S.birthplace||'Unknown'}
+- Sun sign: ${S.sunsign||'Unknown'}
+- Question: "${S.question}"
+
+Cards drawn in a ${S.numCards}-card spread:
+${cardDesc}
+
+Write a rich, flowing tarot reading of 380–460 words:
+1. Open with a brief invocation acknowledging their astrological energy (2–3 sentences, reference sun sign if known).
+2. Read each card in order, connecting it meaningfully to their question and its spread position. Bold the card name at first mention. Make it feel personal and specific.
+3. Close with an integrating passage weaving all cards into a final insight or counsel.
+
+Write in second person. Evocative but accessible. Flowing paragraphs only — no numbered sections, no bullet points.`;
+
+  let readingText='';
+  try {
+    const res=await fetch(ANTHROPIC_API,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+    const data=await res.json();
+    readingText=data.content?.map(b=>b.text||'').join('')||'The Oracle is silent. Please try again.';
+  } catch(e){
+    readingText='The veil between worlds grows thick. Please try again momentarily.';
+  }
+
+  renderReading(readingText);
+
+  // Save to backend
+  try {
+    const body={
+      seeker:{dob:S.dob,birthtime:S.birthtime,birthplace:S.birthplace,sunsign:S.sunsign},
+      question:S.question,
+      spread:S.numCards,
+      cards:S.pickedCards.map(c=>({
+        name:c.name,num:c.num,position:c.position,reversed:c.reversed,
+        upright:c.upright,reversedMeaning:c.rev,sym:c.sym,
+      })),
+      readingText,
+    };
+    const r=await fetch(`${API_BASE}/api/readings`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(body)
+    });
+    if(r.ok){
+      const d=await r.json();
+      S.currentSessionId=d.id;
+      showToast('✦ Reading saved to the archive');
+      loadHistory();
+      loadStats();
+    }
+  } catch(e){ /* backend offline — silently continue */ }
+}
+
+function renderReading(text){
+  let html=text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .split('\n\n').filter(p=>p.trim())
+    .map(p=>`<p>${p.replace(/\n/g,'<br>')}</p>`).join('');
+  document.getElementById('readingContent').innerHTML=html;
+}
+
+/* ── History ── */
+let histOpen=false;
+function toggleHistory(){
+  histOpen=!histOpen;
+  document.getElementById('histPanel').classList.toggle('open',histOpen);
+  if(histOpen) loadHistory();
+}
+
+async function loadHistory(){
+  try {
+    const r=await fetch(`${API_BASE}/api/readings`);
+    const data=await r.json();
+    const body=document.getElementById('histBody');
+    if(!data.length){body.innerHTML='<div class="h-empty">No readings yet</div>';return;}
+    body.innerHTML=data.map(r=>`
+      <div class="h-item" onclick="showHistReading('${r.id}')">
+        <div class="h-item-date">${fmt(r.createdAt)}</div>
+        <div class="h-item-q">${esc(r.question)}</div>
+        <div class="h-item-meta">${r.seeker.sunsign||'Unknown sign'} · ${r.spread}-card spread</div>
+      </div>
+    `).join('');
+  } catch(e){ document.getElementById('histBody').innerHTML='<div class="h-empty">Backend offline</div>'; }
+}
+
+async function showHistReading(id){
+  try {
+    const r=await fetch(`${API_BASE}/api/readings/${id}`);
+    const d=await r.json();
+    toggleHistory();
+    // Show in a modal-ish phase (reuse phase3 layout)
+    document.getElementById('chosenRow').innerHTML=d.cards.map(c=>`
+      <div class="chosen-mini">
+        <div class="csym">${c.sym||'✦'}</div>
+        <div class="cname">${c.name}${c.reversed?' ⟳':''}</div>
+        <div class="cpos">${c.position}</div>
+      </div>
+    `).join('');
+    renderReading(d.readingText||'Reading text not available.');
+    setPhase('phase3');
+  } catch(e){ showToast('Could not load reading'); }
+}
+
+async function loadStats(){
+  try {
+    const r=await fetch(`${API_BASE}/api/stats`);
+    const d=await r.json();
+    if(!d.totalReadings) return;
+    const bar=document.getElementById('statsBar');
+    bar.style.display='flex';
+    bar.innerHTML=`
+      <div class="stat-pill">Readings: <span>${d.totalReadings}</span></div>
+      ${d.topCards[0]?`<div class="stat-pill">Most drawn: <span>${d.topCards[0].name}</span></div>`:''}
+    `;
+  } catch(e){}
+}
+
+/* ── Utils ── */
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+  return arr.map(c=>({...c,reversed:Math.random()<0.28}));
+}
+function delay(ms){return new Promise(r=>setTimeout(r,ms))}
+function esc(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function fmt(iso){
+  const d=new Date(iso);
+  return d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+let toastTimer;
+function showToast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2800);
+}
+function setPhase(id){
+  document.querySelectorAll('.phase').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function resetAll(){
+  S={numCards:3,dob:'',birthtime:'',birthplace:'',sunsign:'',question:'',
+     shuffled:[],pickedCards:[],pickedSlots:[],isShuffling:false,currentSessionId:null};
+  ['dob','birthtime','birthplace','question'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('sunsign').value='';
+  document.querySelectorAll('.spread-btn').forEach((b,i)=>b.classList.toggle('active',i===0));
+  setPhase('phase1');
+}
+
+/* ── Init ── */
+loadStats();
+</script>
+</body>
+</html>

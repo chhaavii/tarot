@@ -1,0 +1,27 @@
+{
+  "readings": [
+    {
+      "id": "e3cf1bfc-4701-4045-8d4f-f176f849562d",
+      "createdAt": "2026-04-09T10:37:48.969Z",
+      "seeker": {
+        "dob": "1990-05-15",
+        "birthtime": "14:30",
+        "birthplace": "Bucharest",
+        "sunsign": "Taurus ♉"
+      },
+      "question": "What path should I follow?",
+      "spread": 3,
+      "cards": [
+        {
+          "name": "The Fool",
+          "num": "0",
+          "position": "Past",
+          "reversed": false,
+          "upright": "New beginnings",
+          "reversedMeaning": "Recklessness"
+        }
+      ],
+      "readingText": "The cards speak clearly..."
+    }
+  ]
+}
