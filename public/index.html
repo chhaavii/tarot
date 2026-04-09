@@ -361,6 +361,9 @@ select option{background:#1e1829;color:var(--text)}
     <!-- position labels row (rendered dynamically to line up) -->
     <div class="pos-labels" id="posLabels"></div>
 
+    <!-- Chosen cards area below deck -->
+    <div id="chosenCardsArea" style="min-height:200px; margin:2rem 0; position:relative;"></div>
+
     <p class="pick-counter" id="pickCounter"></p>
 
     <button class="btn btn-full" id="revealBtn" onclick="goPhase3()" disabled style="margin-top:1rem">
@@ -609,7 +612,7 @@ function pickCard(slot, el){
   S.pickedCards.push({...cardData, position:SPREADS[S.numCards][posNum]});
   S.pickedSlots.push(slot);
 
-  // Flip animation and move to bottom
+  // Flip animation and move to separate chosen area
   el.classList.add('is-flipping');
   el.style.transition='transform .2s ease, box-shadow .2s, z-index 0s';
   el.style.zIndex=50;
@@ -618,10 +621,19 @@ function pickCard(slot, el){
     el.classList.add('flipped','is-chosen');
     el.style.transition='transform .6s cubic-bezier(.4,0,.2,1), box-shadow .3s';
     
-    // Move card to bottom area
-    const bottomY = 180; // Move to bottom of arena
-    const bottomX = (S.pickedCards.length - 1) * 100; // Spread horizontally
-    el.style.transform=`translateX(${bottomX}px) translateY(${bottomY}px) rotateY(180deg)`;
+    // Move card to chosen cards area below deck
+    const chosenArea = document.getElementById('chosenCardsArea');
+    const cardWidth = 95;
+    const cardSpacing = 20;
+    const chosenX = (S.pickedCards.length - 1) * (cardWidth + cardSpacing);
+    const chosenY = 0;
+    
+    // Move card to chosen area
+    chosenArea.appendChild(el);
+    el.style.position = 'absolute';
+    el.style.transform=`translateX(${chosenX}px) translateY(${chosenY}px) rotateY(180deg)`;
+    el.style.left = '0px';
+    el.style.top = '0px';
     
     setTimeout(()=>{
       el.classList.remove('is-flipping');
