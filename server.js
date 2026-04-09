@@ -8,14 +8,16 @@ const path = require('path');
 const app = express();
 const PORT = 3847;
 
-// DB setup
-const adapter = new FileSync(path.join(__dirname, 'readings.json'));
+// DB setup - use /tmp for Vercel serverless
+const dbPath = process.env.NODE_ENV === 'production' 
+  ? '/tmp/readings.json' 
+  : path.join(__dirname, 'readings.json');
+const adapter = new FileSync(dbPath);
 const db = low(adapter);
 db.defaults({ readings: [] }).write();
 
 app.use(cors());
 app.use(express.json({ limit: '2mb' }));
-app.use(express.static(path.join(__dirname, 'public')));
 
 // ── Save a reading ────────────────────────────────────────────────────
 app.post('/api/readings', (req, res) => {
@@ -91,6 +93,12 @@ app.get('/api/stats', (req, res) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`✦ Celestial Oracle backend running on http://localhost:${PORT}`);
-});
+// For local development
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`✦ Celestial Oracle backend running on http://localhost:${PORT}`);
+  });
+}
+
+// Export for Vercel serverless
+module.exports = app;
