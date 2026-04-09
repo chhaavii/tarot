@@ -758,29 +758,8 @@ Write in second person. Evocative but accessible. Flowing paragraphs only — no
       })),
       readingText,
     };
-    const r=await fetch(`${API_BASE}/api/readings`,{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(body)
-    });
-    if(r.ok){
-      const d=await r.json();
-      S.currentSessionId=d.id;
-      showToast('✦ Reading saved to archive');
-      loadHistory();
-      loadStats();
-    } else {
-      // Fallback: Generate reading locally when API fails
-      console.log('API failed, generating local reading');
-      S.currentSessionId = 'local-' + Date.now();
-      showToast('✦ Reading created locally');
-      loadHistory();
-      loadStats();
-    }
-  } catch(e){ 
-    // Fallback: Generate reading locally when API fails
-    console.log('API error, generating local reading');
-    generateLocalReading();
-  }
+    // Skip API call and generate reading locally
+  generateLocalReading();
 }
 
 function generateLocalReading() {
